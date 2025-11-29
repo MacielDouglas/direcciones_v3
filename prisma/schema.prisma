@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String  @id @default(uuid(7))
+  name      String
+  email     String  @unique
+  superUser Boolean @default(false)
+  isAdmin   Boolean @default(false)
+  isSS      Boolean @default(false)
+  group     String  @default("0")
+
+  // Relations
+  cards         Card[] // usuário pode ter vários cards
+  invited       Address[] @relation("InvitedAddresses")
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Address {
+  id           String  @id @default(uuid(7))
+  type         String
+  street       String
+  number       String
+  neighborhood String
+  gps          String?
+  image        String?
+  info         String?
+  nameType     String
+  active       Boolean @default(true)
+  confirmed    Boolean @default(false)
+
+  invited     Boolean @default(false)
+  invitedById String?
+  invitedBy   User?   @relation("InvitedAddresses", fields: [invitedById], references: [id])
+
+  // Relation com Card
+  cardId String? // Address só pode estar em UM Card
+  card   Card?   @relation(fields: [cardId], references: [id])
+}
+
+model Card {
+  id String @id @default(uuid(7))
+
+  // Card pode ter 0 ou 1 usuário
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  startDate DateTime
+  endDate   DateTime
+
+  // Um Card pode ter vários endereços (streets)
+  streets Address[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
