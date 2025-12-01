@@ -14,13 +14,12 @@ datasource db {
 }
 
 model User {
-  id        String  @id @default(uuid(7))
-  name      String
-  email     String  @unique
-  superUser Boolean @default(false)
-  isAdmin   Boolean @default(false)
-  isSS      Boolean @default(false)
-  group     String  @default("0")
+  id    String  @id @default(uuid(7))
+  name  String
+  email String  @unique
+  isSs  Boolean @default(false)
+  admin Boolean @default(false)
+  group String  @default("0")
 
   // Relations
   cards         Card[] // usuário pode ter vários cards
@@ -31,6 +30,13 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+
+  role        String?
+  banned      Boolean?     @default(false)
+  banReason   String?
+  banExpires  DateTime?
+  members     Member[]
+  invitations Invitation[]
 
   @@map("user")
 }
@@ -82,6 +88,9 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  impersonatedBy       String?
+  activeOrganizationId String?
+
   @@unique([token])
   @@index([userId])
   @@map("session")
@@ -118,3 +127,49 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model Organization {
+  id          String       @id
+  name        String
+  slug        String
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  createdAt      DateTime
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
+}
+

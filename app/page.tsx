@@ -1,9 +1,10 @@
 "use client";
-// import { useSession } from "better-auth/react";
+
 import { authClient, signIn } from "@/lib/auth-client";
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import Dashboard from "./dashboard/page";
 
 export default function Home() {
   const router = useRouter();
@@ -24,10 +25,24 @@ export default function Home() {
 
   const { data: session, isPending, error } = authClient.useSession();
 
+  const users = async () => {
+    const { data: result } = await authClient.admin.listUsers({
+      query: {
+        searchValue: "some name",
+        searchField: "name",
+        sortBy: "name",
+      },
+    });
+    return result;
+  };
+
+  console.log("USUários: ", users);
+
   console.log(session?.user);
 
   return (
     <div>
+      <Dashboard />
       <Button onClick={handleSignIn}>Click aqui</Button>
       <Button onClick={handleSignout}>Sair</Button>
       {session ? (
