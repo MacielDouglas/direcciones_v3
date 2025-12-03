@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
 import { admin, organization } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
+import { getActiveOrganization } from "@/server/organizations";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -21,6 +22,21 @@ export const auth = betterAuth({
         required: false,
         defaultValue: "0",
         input: true,
+      },
+    },
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          const organization = await getActiveOrganization(session.userId);
+          return {
+            data: {
+              ...session,
+              activeOrganizationId: organization?.id,
+            },
+          };
+        },
       },
     },
   },

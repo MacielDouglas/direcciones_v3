@@ -30,13 +30,3 @@ export const signIn = async () => {
 
   return data;
 };
-
-export const signOut = async () => {
-  await authClient.signOut({
-    fetchOptions: {
-      onSuccess: () => {
-        console.log("desconectado");
-      },
-    },
-  });
-};

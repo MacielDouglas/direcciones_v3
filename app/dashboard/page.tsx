@@ -9,8 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+// import { getOrganizations } from "@/server/organizations";
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  // const organizations = await getOrganizations();
+
+  // console.log(organizations);
+
+  // console.log(organizations);
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <LogoutButton />
