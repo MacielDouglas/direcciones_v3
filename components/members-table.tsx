@@ -47,7 +47,7 @@ export default function MembersTable({ members }: MembersTableProps) {
             <TableCell className="text-right">
               <MembersTableAction
                 organizationId={member.organizationId}
-                memberIdOrEmail={member.user.email}
+                memberIdOrEmail={member.user.id}
               />
             </TableCell>
           </TableRow>

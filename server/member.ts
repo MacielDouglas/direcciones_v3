@@ -3,7 +3,6 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
-// import { Role } from "better-auth/plugins";
 
 export const addMember = async (
   organizationId: string,
@@ -28,35 +27,50 @@ export const removeMemberManually = async (
   memberIdOrEmail: string
 ) => {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Não autenticado");
+  if (!session) throw new Error("Não autenticado.");
 
-  // Verifica se é owner da organização
-  const isOwner = await prisma.member.findFirst({
+  const currentUserId = session.user.id;
+
+  const requester = await prisma.member.findFirst({
     where: {
       organizationId,
-      userId: session.user.id,
-      role: "owner",
+      userId: currentUserId,
     },
   });
 
-  if (!isOwner) {
-    throw new Error("Apenas o owner pode remover membros");
+  if (!requester) {
+    throw new Error("Você não pertence a esta organização.");
   }
 
-  // Remove o membro (exceto o próprio owner)
-  if (
-    memberIdOrEmail === session.user.email ||
-    session.user.id === memberIdOrEmail
-  ) {
-    throw new Error("Não é possível remover o próprio owner");
+  if (requester.role === "member") {
+    throw new Error("Membros não podem remover outros membros.");
   }
 
-  await prisma.member.deleteMany({
+  const target = await prisma.member.findFirst({
     where: {
       organizationId,
       OR: [{ userId: memberIdOrEmail }, { user: { email: memberIdOrEmail } }],
     },
+    include: {
+      user: true,
+    },
   });
 
-  return { success: true };
+  if (!target) {
+    throw new Error("Membro não encontrado na organização.");
+  }
+
+  if (target.role === "owner") {
+    throw new Error("Owners não podem ser removidos.");
+  }
+
+  if (target.userId === currentUserId) {
+    throw new Error("Você não pode se remover.");
+  }
+
+  await prisma.member.delete({
+    where: { id: target.id },
+  });
+
+  return { success: true, removed: target.user.email };
 };
