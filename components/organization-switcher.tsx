@@ -32,6 +32,7 @@ export function OrganizationSwitcher({
 
       toast.success("Organização trocada com sucesso!");
     } catch (error) {
+      console.error(error);
       toast.error("Falha ao trocar organização");
     }
   };
@@ -45,7 +46,7 @@ export function OrganizationSwitcher({
       )}
       <Select
         onValueChange={handleChangeOrganization}
-        value={activeOrganization?.id}
+        value={activeOrganization?.id ?? ""}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Theme" />

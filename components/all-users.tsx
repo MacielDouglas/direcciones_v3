@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 interface AllUsersProps {
   users: User[];
@@ -36,8 +37,19 @@ export default function AllUsers({ users, organizationId }: AllUsersProps) {
       <h2 className="text-2xl font-bold">Todos Usuários</h2>
       <div className="flex flex-col gap-2">
         {users.map((user) => (
-          <div key={user.id}>
-            {user.name}{" "}
+          <div
+            key={user.id}
+            className="flex gap-5 items-center justify-between"
+          >
+            <Avatar>
+              <AvatarImage
+                src={user.image ?? undefined}
+                className="rounded-full w-8"
+              />
+              <AvatarFallback>CN</AvatarFallback>
+            </Avatar>
+            <p>{user.name}</p>
+            <p className="truncate">{user.email}</p>
             <Button
               disabled={isLoading}
               onClick={() => handleAddMember(user.id)}
@@ -45,7 +57,7 @@ export default function AllUsers({ users, organizationId }: AllUsersProps) {
               {isLoading ? (
                 <Loader2 className="size-4  animate-spin" />
               ) : (
-                "Adicionar Membro"
+                "Adicionar"
               )}
             </Button>
           </div>

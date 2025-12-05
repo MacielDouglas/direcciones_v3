@@ -51,26 +51,6 @@ export const getUsers = async (organizationId: string) => {
   }
 };
 
-// export const signIn = async () => {
-//   const data = await authClient.signIn.social({
-//     provider: "google",
-
-//     callbackURL: "/",
-//   });
-
-//   return data;
-// };
-
-// export const signIn = async () => {
-//   const data = await authClient.signIn.social({
-//     provider: "google",
-
-//     callbackURL: "/",
-//   });
-
-//   return data;
-// };
-
 export const signOut = async () => {
   await authClient.signOut({
     fetchOptions: {

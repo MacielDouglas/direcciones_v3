@@ -15,9 +15,6 @@ import Link from "next/link";
 export default async function Dashboard() {
   const organizations = await getOrganizations();
 
-  console.log(organizations);
-
-  // console.log(organizations);
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <LogoutButton />

@@ -7,8 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import MembersTableAction from "./members-table-action";
 
 interface MembersTableProps {
   members: Array<{
@@ -45,9 +45,10 @@ export default function MembersTable({ members }: MembersTableProps) {
             <TableCell>{member.user.email}</TableCell>
             <TableCell>{member.role}</TableCell>
             <TableCell className="text-right">
-              <Button variant="destructive" type="button" size="sm">
-                Remover
-              </Button>
+              <MembersTableAction
+                organizationId={member.organizationId}
+                memberIdOrEmail={member.user.email}
+              />
             </TableCell>
           </TableRow>
         ))}
