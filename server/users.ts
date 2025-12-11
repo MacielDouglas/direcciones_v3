@@ -11,7 +11,20 @@ export const getCurrentUser = async () => {
     headers: await headers(),
   });
 
-  if (!session) redirect("/login");
+  if (!session) return redirect("/login");
+
+  const activeMember = await auth.api.getActiveMember({
+    headers: await headers(),
+  });
+
+  if (!activeMember) {
+    const memberRole = null;
+    return { ...session, memberRole };
+  }
+
+  const memberRole = await auth.api.getActiveMemberRole({
+    headers: await headers(),
+  });
 
   const sessionUserId = session.user.id;
 
@@ -19,11 +32,13 @@ export const getCurrentUser = async () => {
     where: { id: sessionUserId },
   });
 
-  if (!currentUser) redirect("/login");
+  if (!currentUser) return redirect("/login");
 
   return {
     ...session,
     currentUser,
+    memberRole,
+    activeMember,
   };
 };
 
@@ -59,4 +74,12 @@ export const signOut = async () => {
       },
     },
   });
+};
+
+export const sessionUser = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) return redirect("/");
 };

@@ -12,7 +12,7 @@ export const isAdmin = async () => {
       },
     });
 
-    console.log("susesso: ", success);
+    // console.log("susesso: ", success);
 
     if (error) {
       return {
