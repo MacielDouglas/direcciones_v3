@@ -6,7 +6,7 @@ export const Sidebar = ({ role }: { role: UserRole }) => {
   const items = filterNavigationByRole(role, navigation);
 
   return (
-    <nav className="flex flex-col gap-2 p-4 border-r h-full">
+    <nav className="flex flex-col gap-2 p-4  h-full">
       {items.map((item) => (
         <MenuItem key={item.href} item={item} />
       ))}

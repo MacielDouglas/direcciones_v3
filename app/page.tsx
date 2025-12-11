@@ -1,6 +1,7 @@
 import Header from "@/components/header/header";
 import LogoutButton from "@/components/LoginButton/logoutButton";
 import { Sidebar } from "@/components/navigation/Sidebar";
+
 import { getCurrentUser } from "@/server/users";
 
 export default async function Home() {
@@ -20,13 +21,14 @@ export default async function Home() {
               <p className="text-lg">Elija una opción para comenzar:</p>
               <Sidebar role={memberRole.role} />
               <LogoutButton />
-              <p>Não aparece</p>
+              {/* <p>Não aparece</p> */}
             </div>
           ) : (
             <div>
               <p>
                 Você ainda não faz parte de um grupo. Fale com um administrador.
               </p>
+              {/* <SessionTimer expiresAt={session.expiresAt} /> */}
               <LogoutButton />
             </div>
           )}
