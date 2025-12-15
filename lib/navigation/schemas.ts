@@ -9,6 +9,7 @@ export const navItemSchema = z.object({
   permissions: z.readonly(
     z.array(z.enum(["member", "admin", "owner"])).nonempty()
   ),
+  info: z.string(),
 });
 
 export type NavItem = z.infer<typeof navItemSchema>;

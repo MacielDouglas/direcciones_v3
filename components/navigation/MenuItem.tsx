@@ -1,26 +1,22 @@
 import type { NavItem } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-export function MenuItem({ item }: { item: NavItem }) {
+export function MenuItem({
+  item,
+  className,
+}: {
+  item: NavItem;
+  className: string;
+}) {
   return (
     <Link
       href={item.href}
-      className="
-        group relative flex items-center gap-4 px-6 py-4
-        rounded-3xl
-    
-         backdrop-blur-xl
-        border border-white/20
-        shadow-sm shadow-black/5
-        transition-all duration-300
-        hover:bg-white/20
-        active:scale-95
-      "
+      aria-label={item.info}
+      className={cn("flex items-center gap-4 py-4  px-6", className)}
     >
-      <item.icon className="h-7 w-7   relative z-10 drop-shadow-sm" />
-      <span className=" text-lg font-medium relative z-10 drop-shadow-sm">
-        {item.name}
-      </span>
+      <item.icon className="h-7 w-7 " />
+      <span className=" text-lg font-medium">{item.name}</span>
     </Link>
   );
 }

@@ -1,37 +1,42 @@
 import { navItemSchema } from "@/lib/navigation";
-import { Home, User, Settings, Shield, LogOut } from "lucide-react";
+import { Shield, Dock, MapPinned, Users2, SendHorizontal } from "lucide-react";
 import { Route } from "next";
 
 export const navigation = [
   {
-    name: "Home",
-    icon: Home,
-    href: "/" as Route,
+    name: "Tarjetas",
+    icon: Dock,
+    href: "/cards" as Route,
     permissions: ["member", "admin", "owner"],
+    info: "Acesse las tarjetas asignadas.",
   },
   {
-    name: "Profile",
-    icon: User,
-    href: "/profile" as Route,
+    name: "Direcciones",
+    icon: MapPinned,
+    href: "/address" as Route,
     permissions: ["member", "admin", "owner"],
+    info: "Puede enviar una nueva dirreción o corfirmar si ya existe esta dirección.",
+  },
+  {
+    name: "Users",
+    icon: Users2,
+    href: "/usuarios" as Route,
+    permissions: ["admin", "owner"],
+    info: "Administración de los usuarios.",
+  },
+  {
+    name: "Enviar Tarjeta",
+    icon: SendHorizontal,
+    href: "/send-card" as Route,
+    permissions: ["admin", "owner"],
+    info: "Administración de las tarjetas.",
   },
   {
     name: "Admin Panel",
     icon: Shield,
-    href: "/admin" as Route,
-    permissions: ["admin", "owner"],
-  },
-  {
-    name: "Settings",
-    icon: Settings,
-    href: "/settings" as Route,
-    permissions: ["admin", "owner"],
-  },
-  {
-    name: "Exit",
-    icon: LogOut,
-    href: "/logout" as Route,
-    permissions: ["member", "admin", "owner"],
+    href: "/dashboard" as Route,
+    permissions: ["owner"],
+    info: "Administración del grupo",
   },
 ] as const;
 

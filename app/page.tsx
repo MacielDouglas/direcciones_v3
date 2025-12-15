@@ -19,7 +19,7 @@ export default async function Home() {
           {memberRole ? (
             <div>
               <p className="text-lg">Elija una opción para comenzar:</p>
-              <Sidebar role={memberRole.role} />
+              <Sidebar className={"border"} role={memberRole.role} />
               <LogoutButton />
               {/* <p>Não aparece</p> */}
             </div>
