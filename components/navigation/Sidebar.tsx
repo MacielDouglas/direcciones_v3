@@ -1,22 +1,18 @@
-import { navigation } from "@/config/navigation";
-import { MenuItem } from "./MenuItem";
-import { filterNavigationByRole, UserRole } from "@/lib/navigation";
+import { UserRole } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import NavigationMenu from "./NavigationMenu";
 
-export const Sidebar = ({
-  role,
-  className,
-}: {
+type SidebarProps = {
   role: UserRole;
-  className: string;
-}) => {
-  const items = filterNavigationByRole(role, navigation);
+  className?: string;
+};
 
+export const Sidebar = ({ role, className }: SidebarProps) => {
   return (
-    <nav className="flex flex-col gap-2 p-4  h-full">
-      {items.map((item) => (
-        <MenuItem className={cn(className)} key={item.href} item={item} />
-      ))}
-    </nav>
+    <div>
+      <aside className={cn("flex h-full p-6 flex-col", className)}>
+        <NavigationMenu role={role} />
+      </aside>
+    </div>
   );
 };

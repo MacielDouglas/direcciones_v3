@@ -17,9 +17,9 @@ export default async function Home() {
           </h1>
 
           {memberRole ? (
-            <div>
+            <div className="flex flex-col w-full">
               <p className="text-lg">Elija una opción para comenzar:</p>
-              <Sidebar className={"border"} role={memberRole.role} />
+              <Sidebar className={""} role={memberRole.role} />
               <LogoutButton />
               {/* <p>Não aparece</p> */}
             </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import ButtonDarkMode from "../buttonTheme/ButtonDarkMode";
 import { getCurrentUser } from "@/server/users";
 import { SessionTimer } from "../session-timer";
-import HeaderMenu from "./headerMenu";
+import { MobileMenuDrawer } from "../navigation/MobileMenuDrawer";
 
 export default async function Header() {
   const { session, memberRole } = await getCurrentUser();
@@ -19,7 +19,8 @@ export default async function Header() {
         <div className="flex gap-8 items-center">
           <ButtonDarkMode />
           <SessionTimer expiresAt={session.expiresAt} />
-          {memberRole && <HeaderMenu role={memberRole.role} />}
+          {memberRole && <MobileMenuDrawer role={memberRole.role} />}
+          {/* {memberRole && <HeaderMenu role={memberRole.role} />} */}
         </div>
       </div>
     </header>

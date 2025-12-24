@@ -18,7 +18,7 @@ export default function LogoutButton() {
 
   return (
     <Button onClick={signOut}>
-      <LogoutIcon />
+      <LogoutIcon /> Salir
     </Button>
   );
 }
