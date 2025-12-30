@@ -14,12 +14,9 @@ datasource db {
 }
 
 model User {
-  id    String  @id @default(uuid(7))
+  id    String @id @default(uuid(7))
   name  String
-  email String  @unique
-  isSs  Boolean @default(false)
-  admin Boolean @default(false)
-  group String  @default("0")
+  email String @unique
 
   // Relations
   cards         Card[] // usuário pode ter vários cards
@@ -31,36 +28,57 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  role        String?
-  banned      Boolean?     @default(false)
-  banReason   String?
-  banExpires  DateTime?
-  members     Member[]
-  invitations Invitation[]
+  events CardEvent[]
+
+  role               String?
+  banned             Boolean?     @default(false)
+  banReason          String?
+  banExpires         DateTime?
+  members            Member[]
+  invitations        Invitation[]
+  createdAddressUser Address[]    @relation("AddressCreatedBy")
+  updatedAddUser     Address[]    @relation("AddressUpdatedBy")
+  createdCardUserId  Card[]       @relation("CardCreatedBy")
+  updatedCardUserId  Card[]       @relation("CardUpdatedBy")
+
+  assignedUser Card[] @relation("CardAssignedTo")
 
   @@map("user")
 }
 
 model Address {
-  id           String  @id @default(uuid(7))
-  type         String
-  street       String
-  number       String
-  neighborhood String
-  gps          String?
-  image        String?
-  info         String?
-  nameType     String
-  active       Boolean @default(true)
-  confirmed    Boolean @default(false)
+  id             String  @id @default(uuid(7))
+  type           String
+  street         String
+  number         String
+  neighborhood   String
+  gps            String?
+  image          String?
+  info           String?
+  businessName   String?
+  active         Boolean @default(true)
+  confirmed      Boolean @default(false)
+  organizationId String
 
   invited     Boolean @default(false)
   invitedById String?
   invitedBy   User?   @relation("InvitedAddresses", fields: [invitedById], references: [id])
 
+  createdUserId      String
+  createdAddressUser User   @relation("AddressCreatedBy", fields: [createdUserId], references: [id])
+
+  updatedUserId  String?
+  updatedAddUser User?   @relation("AddressUpdatedBy", fields: [updatedUserId], references: [id])
+
   // Relation com Card
-  cardId String? // Address só pode estar em UM Card
+  cardId String? @unique // Address só pode estar em UM Card
   card   Card?   @relation(fields: [cardId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdUserId])
+  @@map("address")
 }
 
 model Card {
@@ -70,11 +88,24 @@ model Card {
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
 
+  createdCardUserId String
+  createdCardUser   User   @relation("CardCreatedBy", fields: [createdCardUserId], references: [id])
+
+  updatedCardUserId String?
+  updatedCardUser   User?   @relation("CardUpdatedBy", fields: [updatedCardUserId], references: [id])
+
+  // Um Card pode ter vários endereços (streets)
+  addresses Address[]
+  events    CardEvent[]
+
+  assignedUserId String?
+  assignedUser   User?   @relation("CardAssignedTo", fields: [assignedUserId], references: [id])
+
   startDate DateTime
   endDate   DateTime
 
-  // Um Card pode ter vários endereços (streets)
-  streets Address[]
+  @@index([assignedUserId])
+  @@map("card")
 }
 
 model Session {
@@ -173,3 +204,22 @@ model Invitation {
   @@map("invitation")
 }
 
+model CardEvent {
+  id     String @id @default(uuid(7))
+  cardId String
+  card   Card   @relation(fields: [cardId], references: [id])
+
+  userId String // usuário que recebeu ou devolveu
+  user   User   @relation(fields: [userId], references: [id])
+
+  action CardEventAction
+  date   DateTime        @default(now())
+
+  @@index([cardId])
+  @@map("card_event")
+}
+
+enum CardEventAction {
+  ASSIGNED
+  RETURNED
+}
