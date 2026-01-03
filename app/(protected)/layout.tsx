@@ -1,3 +1,4 @@
+import Header from "@/components/header/header";
 import { auth } from "@/lib/auth";
 import { getCurrentUser } from "@/server/users";
 import { headers } from "next/headers";
@@ -31,5 +32,10 @@ export default async function ProtectedLayout({
   // if (!session.session.activeOrganizationId) return redirect("/");
   // console.log("Usando");
 
-  return <>{children}</>;
+  return (
+    <>
+      <Header />
+      {children}
+    </>
+  );
 }

@@ -13,126 +13,182 @@ datasource db {
   provider = "postgresql"
 }
 
+//////////////////////////////////////////////////////
+// USER
+//////////////////////////////////////////////////////
+
 model User {
-  id    String @id @default(uuid(7))
+  id    String @id @default(uuid())
   name  String
   email String @unique
 
-  // Relations
-  cards         Card[] // usuário pode ter vários cards
-  invited       Address[] @relation("InvitedAddresses")
-  emailVerified Boolean   @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  emailVerified Boolean @default(false)
 
-  events CardEvent[]
+  role       String?
+  banned     Boolean   @default(false)
+  banReason  String?
+  banExpires DateTime?
 
-  role               String?
-  banned             Boolean?     @default(false)
-  banReason          String?
-  banExpires         DateTime?
-  members            Member[]
-  invitations        Invitation[]
-  createdAddressUser Address[]    @relation("AddressCreatedBy")
-  updatedAddUser     Address[]    @relation("AddressUpdatedBy")
-  createdCardUserId  Card[]       @relation("CardCreatedBy")
-  updatedCardUserId  Card[]       @relation("CardUpdatedBy")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  assignedUser Card[] @relation("CardAssignedTo")
+  // Auth
+  sessions Session[]
+  accounts Account[]
+
+  // Relations
+  cardsOwned    Card[]      @relation("CardOwner")
+  cardsAssigned Card[]      @relation("CardAssignedTo")
+  createdCards  Card[]      @relation("CardCreatedBy")
+  updatedCards  Card[]      @relation("CardUpdatedBy")
+  events        CardEvent[]
+
+  createdAddresses Address[] @relation("AddressCreatedBy")
+  updatedAddresses Address[] @relation("AddressUpdatedBy")
+  invitedAddresses Address[] @relation("InvitedAddresses")
+
+  members     Member[]
+  invitations Invitation[]
 
   @@map("user")
 }
 
+//////////////////////////////////////////////////////
+// ADDRESS
+//////////////////////////////////////////////////////
+
 model Address {
-  id             String  @id @default(uuid(7))
-  type           String
-  street         String
-  number         String
-  neighborhood   String
-  gps            String?
-  image          String?
-  info           String?
-  businessName   String?
-  active         Boolean @default(true)
-  confirmed      Boolean @default(false)
+  id String @id @default(uuid())
+
+  type         String
+  street       String
+  number       String
+  neighborhood String
+
+  /**
+   * Coordenadas GPS
+   */
+  latitude  Float?
+  longitude Float?
+
+  image        String?
+  info         String?
+  businessName String?
+
+  active    Boolean @default(true)
+  confirmed Boolean @default(false)
+
   organizationId String
 
+  /**
+   * Convite
+   */
   invited     Boolean @default(false)
   invitedById String?
   invitedBy   User?   @relation("InvitedAddresses", fields: [invitedById], references: [id])
 
-  createdUserId      String
-  createdAddressUser User   @relation("AddressCreatedBy", fields: [createdUserId], references: [id])
+  /**
+   * Auditoria
+   */
+  createdUserId String
+  createdBy     User   @relation("AddressCreatedBy", fields: [createdUserId], references: [id])
 
-  updatedUserId  String?
-  updatedAddUser User?   @relation("AddressUpdatedBy", fields: [updatedUserId], references: [id])
+  updatedUserId String?
+  updatedBy     User?   @relation("AddressUpdatedBy", fields: [updatedUserId], references: [id])
 
-  // Relation com Card
-  cardId String? @unique // Address só pode estar em UM Card
+  /**
+   * Relação com Card
+   */
+  cardId String? @unique
   card   Card?   @relation(fields: [cardId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([organizationId])
+  @@index([latitude, longitude])
   @@index([createdUserId])
   @@map("address")
 }
 
+//////////////////////////////////////////////////////
+// CARD
+//////////////////////////////////////////////////////
+
 model Card {
-  id String @id @default(uuid(7))
+  id String @id @default(uuid())
 
-  // Card pode ter 0 ou 1 usuário
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
+  /**
+   * Dono do Card
+   */
+  ownerId String?
+  owner   User?   @relation("CardOwner", fields: [ownerId], references: [id])
 
-  createdCardUserId String
-  createdCardUser   User   @relation("CardCreatedBy", fields: [createdCardUserId], references: [id])
+  /**
+   * Auditoria
+   */
+  createdById String
+  createdBy   User   @relation("CardCreatedBy", fields: [createdById], references: [id])
 
-  updatedCardUserId String?
-  updatedCardUser   User?   @relation("CardUpdatedBy", fields: [updatedCardUserId], references: [id])
+  updatedById String?
+  updatedBy   User?   @relation("CardUpdatedBy", fields: [updatedById], references: [id])
 
-  // Um Card pode ter vários endereços (streets)
-  addresses Address[]
-  events    CardEvent[]
-
+  /**
+   * Atribuição
+   */
   assignedUserId String?
   assignedUser   User?   @relation("CardAssignedTo", fields: [assignedUserId], references: [id])
+
+  /**
+   * Relações
+   */
+  addresses Address[]
+  events    CardEvent[]
 
   startDate DateTime
   endDate   DateTime
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([assignedUserId])
+  @@index([ownerId])
   @@map("card")
 }
 
+//////////////////////////////////////////////////////
+// AUTH
+//////////////////////////////////////////////////////
+
 model Session {
-  id        String   @id
+  id     String @id
+  token  String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   impersonatedBy       String?
   activeOrganizationId String?
 
-  @@unique([token])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@map("session")
 }
 
 model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String @id
+  providerId String
+  accountId  String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -140,9 +196,11 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
   @@index([userId])
   @@map("account")
 }
@@ -152,70 +210,90 @@ model Verification {
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([identifier])
   @@map("verification")
 }
 
+//////////////////////////////////////////////////////
+// ORGANIZATION
+//////////////////////////////////////////////////////
+
 model Organization {
-  id          String       @id
-  name        String
-  slug        String
-  logo        String?
-  createdAt   DateTime
-  metadata    String?
+  id   String  @id
+  name String
+  slug String  @unique
+  logo String?
+
+  metadata  String?
+  createdAt DateTime @default(now())
+
   members     Member[]
   invitations Invitation[]
 
-  @@unique([slug])
   @@map("organization")
 }
 
 model Member {
-  id             String       @id
+  id String @id
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role           String       @default("member")
-  createdAt      DateTime
 
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, userId])
   @@index([organizationId])
   @@index([userId])
   @@map("member")
 }
 
 model Invitation {
-  id             String       @id
+  id String @id
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  email          String
-  role           String?
-  status         String       @default("pending")
-  expiresAt      DateTime
-  createdAt      DateTime     @default(now())
-  inviterId      String
-  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  email  String
+  role   String?
+  status String  @default("pending")
+
+  inviterId String
+  inviter   User   @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   @@index([organizationId])
   @@index([email])
   @@map("invitation")
 }
 
-model CardEvent {
-  id     String @id @default(uuid(7))
-  cardId String
-  card   Card   @relation(fields: [cardId], references: [id])
+//////////////////////////////////////////////////////
+// EVENTS
+//////////////////////////////////////////////////////
 
-  userId String // usuário que recebeu ou devolveu
+model CardEvent {
+  id String @id @default(uuid())
+
+  cardId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  userId String
   user   User   @relation(fields: [userId], references: [id])
 
   action CardEventAction
   date   DateTime        @default(now())
 
   @@index([cardId])
+  @@index([userId])
   @@map("card_event")
 }
 
