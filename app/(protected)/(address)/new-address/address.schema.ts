@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ADDRESS_TYPES } from "./address.constants";
+import { ADDRESS_TYPES, AddressFormField } from "./address.constants";
 
 export const addressSchema = z.object({
   type: z.enum(ADDRESS_TYPES),
@@ -7,8 +7,14 @@ export const addressSchema = z.object({
   number: z.string().min(1, "Obrigatório"),
   neighborhood: z.string().min(2, "Bairro obrigatório"),
   city: z.string().min(3, "Cidade obrigatória"),
-  latitude: z.number(),
-  longitude: z.number(),
+  latitude: z
+    .number()
+    .min(-90, "Latitude inválida")
+    .max(90, "Latitude inválida"),
+  longitude: z
+    .number()
+    .min(-180, "Longitude inválida")
+    .max(180, "Longitude inválida"),
   image: z.string().optional(),
   info: z.string().max(250).optional(),
   businessName: z.string().max(40).optional(),
@@ -20,70 +26,73 @@ export const addressSchema = z.object({
 
 export type AddressFormData = z.infer<typeof addressSchema>;
 
-export const addressFormFields = [
+export const addressFormFields: AddressFormField[] = [
   {
+    kind: "select",
     name: "type",
-    label: "Tipo",
-    placeholder: "Elija el tipo de negocio.",
-    type: "select",
+    label: "Tipo de endereço",
     options: [
       { value: "House", label: "Casa" },
       { value: "Apartment", label: "Apartamento" },
-      { value: "Store", label: "Tienda" },
+      { value: "Store", label: "Loja" },
       { value: "Hotel", label: "Hotel" },
       { value: "Restaurant", label: "Restaurante" },
     ],
   },
+
   {
+    kind: "text",
     name: "businessName",
-    label: "Nombre de la empresa",
-    placeholder: "Ej. Hotel Verde Mar",
-    type: "text",
+    label: "Nome do estabelecimento",
+    placeholder: "Ex: Hotel Verde Mar",
   },
+
   {
+    kind: "text",
     name: "street",
-    label: "Calle",
-    placeholder: "Ej. Rua: Enseada dos corais",
-    type: "text",
+    label: "Rua",
+    placeholder: "Ex: Rua Enseada dos Corais",
   },
+
   {
-    name: "DuoInput",
-    label: "Input",
-    placeholder: "Dos inputs texto",
-    type: "input",
-    options: [
+    kind: "group",
+    fields: [
       {
-        value: "number",
+        kind: "text",
+        name: "number",
         label: "Número",
       },
       {
-        value: "neighborhood",
-        label: "Vecindario o Barrio",
+        kind: "text",
+        name: "neighborhood",
+        label: "Bairro",
       },
     ],
   },
+
   {
+    kind: "text",
     name: "city",
-    label: "Ciudad",
-    placeholder: "Ej. Ipojuca",
-    type: "text",
+    label: "Cidade",
+    placeholder: "Ex: Ipojuca",
   },
+
   {
+    kind: "text",
     name: "info",
-    label: "Información adicional",
-    placeholder: "Ej. Apto 10 o Casa amarilla",
-    type: "text",
+    label: "Informações adicionais",
+    placeholder: "Apto 10, casa amarela",
   },
+
   {
+    kind: "switch",
     name: "active",
-    label: "Active",
-    placeholder: "Direccción activa.",
-    type: "switch",
+    label: "Endereço ativo",
   },
+
   {
+    kind: "switch",
     name: "confirmed",
-    label: "Confirmado",
-    placeholder: "Esta dirección esta confirmada?",
-    type: "switch",
+    label: "Endereço confirmado",
   },
 ];
