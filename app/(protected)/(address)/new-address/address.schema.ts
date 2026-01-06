@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ADDRESS_TYPES, AddressFormField } from "./address.constants";
+import { sanitizeAddressInfo } from "./address.sanitizer";
 
 export const addressSchema = z.object({
   type: z.enum(ADDRESS_TYPES),
@@ -16,7 +17,15 @@ export const addressSchema = z.object({
     .min(-180, "Longitude inválida")
     .max(180, "Longitude inválida"),
   image: z.string().optional(),
-  info: z.string().max(250).optional(),
+  info: z
+    .string()
+    .max(300)
+    .optional()
+    .transform((val) => {
+      if (!val) return val;
+      return sanitizeAddressInfo(val);
+    }),
+
   businessName: z.string().max(40).optional(),
   active: z.boolean().default(true),
   confirmed: z.boolean().default(false),

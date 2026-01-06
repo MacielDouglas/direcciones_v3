@@ -22,11 +22,12 @@ export const authClient = createAuthClient({
 });
 
 export const signIn = async () => {
-  const { data } = await authClient.signIn.social({
+  const { data, error } = await authClient.signIn.social({
     provider: "google",
-
     callbackURL: "/",
   });
+
+  if (error) return error;
 
   return data;
 };

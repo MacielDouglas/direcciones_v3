@@ -1,96 +1,92 @@
-// components/AddressMap.tsx
 "use client";
 
-import Map, { Marker } from "react-map-gl/mapbox";
+import Map, { Marker, ViewState } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { useUserLocation } from "./hooks/useUserLocation";
 import { Button } from "@/components/ui/button";
 
-const FALLBACK = { latitude: -15.78, longitude: -47.93 };
+type Coords = {
+  latitude: number;
+  longitude: number;
+};
+
+interface AddressMapProps {
+  liveCoords?: Coords | null;
+}
+
+const FALLBACK: Coords = { latitude: -15.78, longitude: -47.93 };
 const ZOOM = 16;
 
-export default function AddressMap() {
+export default function AddressMap({ liveCoords }: AddressMapProps) {
   const { watch, setValue } = useFormContext();
+
   const formLat = watch("latitude");
   const formLng = watch("longitude");
 
-  const {
-    latitude: userLat,
-    longitude: userLng,
-    getUserLocation,
-  } = useUserLocation(true);
+  /**
+   * 📍 Centro inicial do mapa
+   */
+  const center: Coords =
+    formLat && formLng
+      ? { latitude: formLat, longitude: formLng }
+      : liveCoords ?? FALLBACK;
 
-  // 🗺️ mapa SEMPRE renderiza
-  const [viewState, setViewState] = useState({
-    latitude: FALLBACK.latitude,
-    longitude: FALLBACK.longitude,
+  /**
+   * 🗺️ ViewState controlado (SEM useEffect)
+   */
+  const [viewState, setViewState] = useState<ViewState>({
+    latitude: center.latitude,
+    longitude: center.longitude,
     zoom: ZOOM,
+    bearing: 0,
+    pitch: 0,
+    padding: {},
   });
 
   /**
-   * 1️⃣ GPS inicial (automaticamente)
+   * 📌 Clique no mapa
    */
-  useEffect(() => {
-    let raf: number | undefined;
-    if (userLat && userLng) {
-      raf = requestAnimationFrame(() => {
-        setViewState((prev) => ({
-          ...prev,
-          latitude: userLat,
-          longitude: userLng,
-        }));
-
-        setValue("latitude", userLat, { shouldValidate: true });
-        setValue("longitude", userLng, { shouldValidate: true });
-      });
-    }
-
-    return () => {
-      if (raf !== undefined) cancelAnimationFrame(raf);
-    };
-  }, [userLat, userLng, setValue]);
-
-  /**
-   * 2️⃣ Usuário colou coordenadas manualmente
-   */
-  useEffect(() => {
-    let raf: number | undefined;
-    if (formLat && formLng) {
-      raf = requestAnimationFrame(() => {
-        setViewState((prev) => ({
-          ...prev,
-          latitude: formLat,
-          longitude: formLng,
-        }));
-      });
-    }
-
-    return () => {
-      if (raf !== undefined) cancelAnimationFrame(raf);
-    };
-  }, [formLat, formLng]);
-
-  /**
-   * 3️⃣ Clique no mapa
-   */
-  const handleClick = (e: { lngLat: { lat: number; lng: number } }) => {
+  const handleMapClick = (e: { lngLat: { lat: number; lng: number } }) => {
     const { lat, lng } = e.lngLat;
 
     setValue("latitude", lat, { shouldValidate: true });
     setValue("longitude", lng, { shouldValidate: true });
 
-    setViewState((prev) => ({
-      ...prev,
+    setViewState((v) => ({
+      ...v,
       latitude: lat,
       longitude: lng,
     }));
   };
 
+  /**
+   * 🧹 Limpar GPS do formulário
+   */
+  const handleClear = () => {
+    setValue("latitude", undefined);
+    setValue("longitude", undefined);
+  };
+
+  const handleUseMyLocation = () => {
+    if (!liveCoords) return;
+
+    // 1️⃣ Atualiza o formulário
+    setValue("latitude", liveCoords.latitude, { shouldValidate: true });
+    setValue("longitude", liveCoords.longitude, { shouldValidate: true });
+
+    // 2️⃣ Move o mapa (CENTRALIZA)
+    setViewState((prev) => ({
+      ...prev,
+      latitude: liveCoords.latitude,
+      longitude: liveCoords.longitude,
+      zoom: ZOOM,
+    }));
+  };
+
   return (
     <div className="space-y-3">
-      {/* INPUTS PARA COLAR GPS */}
+      {/* INPUTS GPS */}
       <div className="grid grid-cols-2 gap-3">
         <input
           type="number"
@@ -119,30 +115,37 @@ export default function AddressMap() {
         />
       </div>
 
-      {/* BOTÃO GPS */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <Button
           type="button"
           size="sm"
-          variant="outline"
-          onClick={getUserLocation}
+          variant="secondary"
+          onClick={handleUseMyLocation}
+          disabled={!liveCoords}
         >
           Usar minha localização
         </Button>
+
+        <Button type="button" size="sm" variant="outline" onClick={handleClear}>
+          Limpar
+        </Button>
       </div>
 
-      {/* MAPA LIVRE */}
+      {/* MAPA */}
       <div className="h-72 rounded overflow-hidden">
         <Map
           mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
           mapStyle="mapbox://styles/mapbox/standard"
           {...viewState}
           onMove={(e) => setViewState(e.viewState)}
-          onClick={handleClick}
+          onClick={handleMapClick}
         >
-          {formLat && formLng && (
-            <Marker latitude={formLat} longitude={formLng} />
-          )}
+          {(formLat && formLng) || liveCoords ? (
+            <Marker
+              latitude={formLat ?? liveCoords!.latitude}
+              longitude={formLng ?? liveCoords!.longitude}
+            />
+          ) : null}
         </Map>
       </div>
     </div>

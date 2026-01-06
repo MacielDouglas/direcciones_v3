@@ -1,50 +1,39 @@
-// components/AddressLocationDialog.tsx
 "use client";
 
-import { useEffect } from "react";
-import { useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import AddressMap from "./AddressMap";
-import { useUserLocation } from "./hooks/useUserLocation";
-// import { useUserLocation } from "@/hooks/useUserLocation";
+import { useAddressLocation } from "./hooks/useAddressLocation";
+import { useLiveUserLocation } from "./hooks/useLiveUserLocation";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 export default function AddressLocationDialog() {
-  const { setValue } = useFormContext();
-  const { latitude, longitude, getUserLocation, loading } = useUserLocation();
+  const addressLocation = useAddressLocation();
 
-  // sempre que o hook receber coords, sincroniza com o form
-  useEffect(() => {
-    if (latitude && longitude) {
-      setValue("latitude", latitude, { shouldValidate: true });
-      setValue("longitude", longitude, { shouldValidate: true });
-    }
-  }, [latitude, longitude, setValue]);
+  // GPS só atualiza enquanto NÃO estiver travado
+  const liveCoords = useLiveUserLocation(!addressLocation.locked);
+
+  const handleOpen = () => {
+    addressLocation.openDialog();
+  };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" variant="secondary">
-          Definir localização GPS
-        </Button>
+        <Button onClick={handleOpen}>Definir localização GPS</Button>
       </DialogTrigger>
 
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Localização do Endereço</DialogTitle>
+          <DialogTitle>Localização do endereço</DialogTitle>
         </DialogHeader>
 
-        <Button onClick={getUserLocation} disabled={loading}>
-          {loading ? "Obtendo localização..." : "Usar minha localização"}
-        </Button>
-
-        <AddressMap />
+        <AddressMap liveCoords={liveCoords} />
       </DialogContent>
     </Dialog>
   );

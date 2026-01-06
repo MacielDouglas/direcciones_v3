@@ -8,6 +8,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import AddressFormFields from "../components/AddressFormFields";
 import AddressLocationDialog from "../components/AddressLocationDialog";
+import { useLiveUserLocation } from "../components/hooks/useLiveUserLocation";
 
 interface NewAddressProps {
   userId: string;
@@ -35,11 +36,15 @@ export default function NewAddress({
     },
   });
 
+  useLiveUserLocation(true);
+
   const onSubmit = (data: AddressFormData) => {
     startTransition(() => {
       console.log("ENDEREÇO CADASTRADO:", data);
     });
   };
+
+  // useUserLocation();
 
   return (
     <Form {...form}>
