@@ -3,12 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { AddressFormData, addressSchema } from "./address.schema";
-import { startTransition } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import AddressFormFields from "../components/AddressFormFields";
 import AddressLocationDialog from "../components/AddressLocationDialog";
-import { useLiveUserLocation } from "../components/hooks/useLiveUserLocation";
+import { ImageUpload } from "@/components/Image/ImageUpload";
 
 interface NewAddressProps {
   userId: string;
@@ -19,6 +19,10 @@ export default function NewAddress({
   userId,
   organizationId,
 }: NewAddressProps) {
+  const [userLocation, setUserLocation] = useState({
+    latitude: 0,
+    longitude: 0,
+  });
   const form = useForm({
     resolver: zodResolver(addressSchema),
     mode: "onChange",
@@ -27,8 +31,8 @@ export default function NewAddress({
       street: "",
       number: "",
       neighborhood: "",
-      latitude: undefined,
-      longitude: undefined,
+      latitude: userLocation.latitude,
+      longitude: userLocation.longitude,
       active: true,
       confirmed: false,
       createdUserId: userId,
@@ -36,15 +40,28 @@ export default function NewAddress({
     },
   });
 
-  useLiveUserLocation(true);
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      setUserLocation({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
+    });
+  }, []);
+
+  // useLiveUserLocation(true);
 
   const onSubmit = (data: AddressFormData) => {
     startTransition(() => {
       console.log("ENDEREÇO CADASTRADO:", data);
     });
   };
-
-  // useUserLocation();
+  const missingFields = Object.entries(form.formState.errors).map(
+    ([field, error]) => ({
+      field,
+      message: error?.message,
+    })
+  );
 
   return (
     <Form {...form}>
@@ -53,18 +70,47 @@ export default function NewAddress({
 
         {/* LOCALIZAÇÃO */}
         <AddressLocationDialog />
+        {/* {console.log("GPS", Number(form.getValues(["longitude"])))} */}
+        {Number(form.getValues(["longitude"])) !== 0 ? (
+          <p className="text-blue-500 font-semibold">
+            GPS Lat: {form.getValues(["latitude"])}, Lon:
+            {form.getValues(["longitude"])}
+          </p>
+        ) : (
+          <p className="text-red-500 font-semibold">
+            Não tem dados GPS. GPS obrigatório.
+          </p>
+        )}
 
-        <p>
-          Valor GPS: {form.getValues(["longitude"])}{" "}
-          {form.getValues(["latitude"])}
-        </p>
+        <ImageUpload />
 
+        {missingFields.length > 0 && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3">
+            <p className="text-sm font-medium text-destructive mb-2">
+              Campos obrigatórios pendentes:
+            </p>
+
+            <ul className="space-y-1 text-sm text-destructive">
+              {missingFields.map(({ field, message }) => (
+                <li key={field}>
+                  • <strong>{field}</strong>
+                  {message && ` — ${message}`}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="flex justify-between gap-4">
           <Button type="button" variant="outline" onClick={() => form.reset()}>
             Limpar
           </Button>
 
-          <Button type="submit">Confirmar e Enviar</Button>
+          <Button
+            type="submit"
+            disabled={!form.formState.isValid || form.formState.isSubmitting}
+          >
+            Confirmar e Enviar
+          </Button>
         </div>
       </form>
     </Form>
