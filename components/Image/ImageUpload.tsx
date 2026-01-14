@@ -1,108 +1,141 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+// import { useState, useMemo, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
+import { AddressPhoto } from "@/app/(protected)/(address)/new-address/address.constants";
+import { useFormContext, useWatch } from "react-hook-form";
+import { AddressFormData } from "@/app/(protected)/(address)/new-address/address.schema";
 
-export function ImageUpload() {
-  const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imageKey, setImageKey] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+type AddressPhotoType = (typeof AddressPhoto)[number]["type"];
+
+const AddressPhotoMap: Record<AddressPhotoType, string> = Object.fromEntries(
+  AddressPhoto.map(({ type, url }) => [type, url])
+) as Record<AddressPhotoType, string>;
+
+type UserImageValue = { imageUrl: string | null; imageKey: string | null };
+
+interface ImageUploadProps {
+  userImage: UserImageValue;
+  onChangeUserImage: (value: UserImageValue) => void;
+}
+
+// export function ImageUpload({ value, onChange }: ImageUploadProps) {
+export function ImageUpload({
+  userImage,
+  onChangeUserImage,
+}: ImageUploadProps) {
+  const { control } = useFormContext<AddressFormData>();
+  const type = useWatch({ control, name: "type" });
+
+  const [uploading, setUploading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  /** Foto default baseada no tipo */
+  const defaultPhoto = AddressPhotoMap[type];
+
+  const previewUrl = useMemo(() => {
+    return userImage?.imageUrl ?? defaultPhoto;
+  }, [userImage?.imageUrl, defaultPhoto]);
+
+  const hasUserImage = Boolean(userImage?.imageUrl);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+    setUploading(true);
+    setImageLoaded(false);
 
-    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const res = await fetch("/api/image/upload", {
-      method: "POST",
-      body: formData,
-    });
+      const res = await fetch("/api/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
 
-    const data = await res.json();
-    setLoading(false);
-
-    if (data.url) {
-      setImageUrl(data.url);
-
-      const key = data.url.split("/").pop();
-      setImageKey(key);
+      if (data?.url) {
+        onChangeUserImage({
+          imageUrl: data.url,
+          imageKey: data.key ?? data.url.split("/").pop() ?? null,
+        });
+      }
+    } finally {
+      setUploading(false);
+      // permitir re-upload do mesmo arquivo
+      e.target.value = "";
     }
   }
 
   async function handleDelete() {
-    if (!imageKey) return;
+    if (userImage?.imageKey) {
+      await fetch(
+        `/api/image/delete?key=${encodeURIComponent(userImage.imageKey)}`,
+        {
+          method: "DELETE",
+        }
+      );
+    }
 
-    await fetch(`/api/image/delete?key=${imageKey}`, {
-      method: "DELETE",
-    });
-
-    setImageUrl(null);
-    setImageKey(null);
+    // Limpa só a imagem do usuário => preview volta pra default automaticamente
+    onChangeUserImage({ imageUrl: null, imageKey: null });
   }
 
-  console.log(imageUrl);
-
   return (
-    <div className="space-y-2 w-full flex items-center flex-col">
-      <Label className="self-start">Foto del local</Label>
-      <div className="border rounded-md w-full p-3 flex flex-col items-center gap-4">
-        <h3 className="text-2xl font-semibold">¿Quieres enviar una foto?</h3>
-        {imageUrl ? (
+    <div className="w-full space-y-2 flex flex-col items-center">
+      <Label className="self-start">Foto do local</Label>
+
+      <div className="w-full border rounded-md p-3 flex flex-col items-center gap-4">
+        <h3 className="text-lg font-semibold text-center">
+          Quer enviar uma foto?
+        </h3>
+
+        <div className="relative w-full max-w-sm aspect-square">
+          {!imageLoaded && <Skeleton className="absolute inset-0 rounded-lg" />}
+
           <Image
-            src={imageUrl}
-            width={400}
-            height={400}
+            src={previewUrl}
             alt="Preview"
-            className="rounded-lg max-w-full object-cover"
+            fill
+            priority
+            className="rounded-lg object-cover"
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(true)}
           />
-        ) : (
-          // <>
-          <>
-            {!loaded && <Skeleton className="inset-0 rounded-b-md absolute" />}
-            <Image
-              src="https://pub-20ea17ad5d694dbc94202efa1ea340ff.r2.dev/da435e8d-39cf-48b6-b72a-e5c509520fdb.webp"
-              width={400}
-              height={400}
-              alt="Preview"
-              className="rounded-lg max-w-full object-cover"
-              priority
-              onLoad={() => setLoaded(true)}
-            />
-          </>
-        )}
-        {/* </> */}
-        <p className="text-sm font-light p-2 bg-gray-100 dark:bg-stone-800 text-center rounded-sm">
-          Puedes seleccionar una foto existente o tomar una nueva. Luego, haz
-          clic en Subir imagen para completar el envío.
+        </div>
+
+        <p className="text-sm text-center p-2 rounded-sm bg-gray-100 dark:bg-stone-800">
+          Você pode escolher uma foto existente ou tirar uma nova com a câmera.
         </p>
-        <Button>
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleUpload}
-            // className="cursor-pointer p-2 border rounded"
-          />
+
+        <Button asChild className="w-full">
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleUpload}
+              className="hidden"
+            />
+            {uploading ? "Enviando..." : "Enviar imagem"}
+          </label>
         </Button>
-        {loading && <p>Enviando...</p>}
-        {imageUrl && (
-          <div className="space-y-2">
-            <Button
-              type="button"
-              onClick={handleDelete}
-              className="text-sm text-red-600"
-            >
-              Remover imagem
-            </Button>
-          </div>
+
+        {hasUserImage && (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            className="w-full"
+          >
+            Remover imagem
+          </Button>
         )}
       </div>
     </div>

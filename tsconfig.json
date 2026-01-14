@@ -13,11 +13,14 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "types": ["jest", "node"],
     "plugins": [
       {
         "name": "next"
       }
     ],
+
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
@@ -29,7 +32,8 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts",
-    "lib/navigation/schemas.ts"
+    "lib/navigation/schemas.ts",
+    "jest.config.cjs"
   ],
   "exclude": ["node_modules"]
 }

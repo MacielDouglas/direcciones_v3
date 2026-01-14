@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { AddressFormData, addressSchema } from "./address.schema";
 import { startTransition, useEffect, useState } from "react";
 import { Form } from "@/components/ui/form";
@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import AddressFormFields from "../components/AddressFormFields";
 import AddressLocationDialog from "../components/AddressLocationDialog";
 import { ImageUpload } from "@/components/Image/ImageUpload";
+import { createAddressAction } from "./action";
+import { toast } from "sonner";
+import { AddressPhoto } from "./address.constants";
 
 interface NewAddressProps {
   userId: string;
@@ -23,6 +26,7 @@ export default function NewAddress({
     latitude: 0,
     longitude: 0,
   });
+
   const form = useForm({
     resolver: zodResolver(addressSchema),
     mode: "onChange",
@@ -35,6 +39,10 @@ export default function NewAddress({
       longitude: userLocation.longitude,
       active: true,
       confirmed: false,
+      image: {
+        imageUrl: null,
+        imageKey: null,
+      },
       createdUserId: userId,
       organizationId,
     },
@@ -46,16 +54,52 @@ export default function NewAddress({
         latitude: coords.latitude,
         longitude: coords.longitude,
       });
-    });
-  }, []);
 
-  // useLiveUserLocation(true);
+      form.setValue("latitude", coords.latitude, {
+        shouldValidate: true,
+      });
+
+      form.setValue("longitude", coords.longitude, {
+        shouldValidate: true,
+      });
+    });
+  }, [form]);
+
+  const defaultByType = Object.fromEntries(
+    AddressPhoto.map((p) => [p.type, p.url])
+  ) as Record<string, string>;
 
   const onSubmit = (data: AddressFormData) => {
-    startTransition(() => {
-      console.log("ENDEREÇO CADASTRADO:", data);
+    if (data.type === "House") {
+      data = {
+        ...data,
+        businessName: "",
+      };
+    }
+
+    const finalImageUrl = data.image.imageUrl ?? defaultByType[data.type];
+
+    startTransition(async () => {
+      try {
+        await createAddressAction({
+          ...data,
+          image: {
+            ...data.image,
+            imageUrl: finalImageUrl,
+          },
+        });
+
+        toast.success(
+          `¡Direccion: ${data.street}, ${data.number} registrado exitosamente!`
+        );
+        form.reset();
+      } catch (error) {
+        toast.error("Erro ao cadastrar novo endereço!");
+        console.error("Erro ao criar novo endereço!", error);
+      }
     });
   };
+
   const missingFields = Object.entries(form.formState.errors).map(
     ([field, error]) => ({
       field,
@@ -69,20 +113,31 @@ export default function NewAddress({
         <AddressFormFields />
 
         {/* LOCALIZAÇÃO */}
-        <AddressLocationDialog />
-        {/* {console.log("GPS", Number(form.getValues(["longitude"])))} */}
-        {Number(form.getValues(["longitude"])) !== 0 ? (
-          <p className="text-blue-500 font-semibold">
-            GPS Lat: {form.getValues(["latitude"])}, Lon:
-            {form.getValues(["longitude"])}
-          </p>
-        ) : (
-          <p className="text-red-500 font-semibold">
-            Não tem dados GPS. GPS obrigatório.
-          </p>
-        )}
+        <div className="border rounded-xl  flex items-center flex-col gap-4 p-4">
+          <AddressLocationDialog />
+          {Number(form.getValues(["longitude"])) !== 0 ? (
+            <p className="text-blue-500 font-semibold">
+              GPS Lat: {form.getValues(["latitude"])}, Lon:
+              {form.getValues(["longitude"])}
+            </p>
+          ) : (
+            <p className="text-red-500 font-semibold">
+              Não tem dados GPS. GPS obrigatório.
+            </p>
+          )}
+        </div>
 
-        <ImageUpload />
+        <Controller
+          name="image"
+          control={form.control}
+          render={({ field }) => (
+            <ImageUpload
+              // valor do usuário (pode ser null)
+              userImage={field.value ?? { imageUrl: null, imageKey: null }}
+              onChangeUserImage={field.onChange}
+            />
+          )}
+        />
 
         {missingFields.length > 0 && (
           <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3">

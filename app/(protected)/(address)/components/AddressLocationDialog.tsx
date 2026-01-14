@@ -14,7 +14,6 @@ import AddressGpsInput from "./AddressGpsInput";
 
 export default function AddressLocationDialog() {
   const addressLocation = useAddressLocation();
-  // navigator.geolocation.getCurrentPosition(({}) => {});
 
   // GPS só atualiza enquanto NÃO estiver travado
   const liveCoords = useLiveUserLocation(!addressLocation.locked);

@@ -2,6 +2,11 @@ import { z } from "zod";
 import { ADDRESS_TYPES, AddressFormField } from "./address.constants";
 import { sanitizeAddressInfo } from "./address.sanitizer";
 
+const imageSchema = z.object({
+  imageUrl: z.url().nullable(),
+  imageKey: z.string().nullable(),
+});
+
 export const addressSchema = z.object({
   type: z.enum(ADDRESS_TYPES),
   street: z.string().min(2, "Rua muito curta"),
@@ -16,7 +21,7 @@ export const addressSchema = z.object({
     .number()
     .min(-180, "Longitude inválida")
     .max(180, "Longitude inválida"),
-  image: z.string().optional(),
+  image: imageSchema.default({ imageUrl: null, imageKey: null }),
   info: z
     .string()
     .max(300)
