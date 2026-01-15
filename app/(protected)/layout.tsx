@@ -19,9 +19,9 @@ export default async function ProtectedLayout({
 
   // const org = await auth.api.getFullOrganization({ headers: await headers() });
 
-  console.log("SESSION: ", session);
+  // console.log("SESSION: ", session);
 
-  console.log("Get Active", user?.role);
+  // console.log("Get Active", user?.role);
 
   // console.log("Role :", role);
 
