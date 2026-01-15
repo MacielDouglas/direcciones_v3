@@ -1,11 +1,7 @@
-// AddressFormFields.tsx
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
-import {
-  AddressFormData,
-  addressFormFields,
-} from "../new-address/address.schema";
+import { AddressFormData, addressFormFields } from "../address.schema";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

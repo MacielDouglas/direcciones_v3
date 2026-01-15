@@ -1,17 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { AddressFormData, addressSchema } from "./address.schema";
 import { startTransition, useEffect, useState } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import AddressFormFields from "../components/AddressFormFields";
-import AddressLocationDialog from "../components/AddressLocationDialog";
-import { ImageUpload } from "@/components/Image/ImageUpload";
+import AddressFormFields from "./_components/AddressFormFields";
+import AddressLocationDialog from "./_components/AddressLocationDialog";
 import { createAddressAction } from "./action";
 import { toast } from "sonner";
 import { AddressPhoto } from "./address.constants";
+import { ImageUpload } from "./_components/ImageUpload";
 
 interface NewAddressProps {
   userId: string;
@@ -46,6 +46,11 @@ export default function NewAddress({
       createdUserId: userId,
       organizationId,
     },
+  });
+
+  const addressType = useWatch({
+    control: form.control,
+    name: "type",
   });
 
   useEffect(() => {
@@ -135,6 +140,7 @@ export default function NewAddress({
               // valor do usuário (pode ser null)
               userImage={field.value ?? { imageUrl: null, imageKey: null }}
               onChangeUserImage={field.onChange}
+              addressType={addressType}
             />
           )}
         />

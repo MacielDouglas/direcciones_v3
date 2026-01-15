@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import type { AddressFormData } from "../new-address/address.schema";
+import type { AddressFormData } from "../address.schema";
 
 import {
   FormControl,
