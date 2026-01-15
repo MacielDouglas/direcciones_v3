@@ -1,5 +1,6 @@
 import { AddressFormData } from "@/app/(protected)/(address)/new-address/address.schema";
-import prisma from "../prisma";
+import { prisma } from "../prisma";
+// import prisma from "../prisma";
 
 export async function createAddress(data: AddressFormData) {
   return prisma.address.create({

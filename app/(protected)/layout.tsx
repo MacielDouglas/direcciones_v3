@@ -10,7 +10,7 @@ export default async function ProtectedLayout({
   children: React.ReactNode;
 }) {
   await getCurrentUser();
-  const session = await auth.api.getSession({ headers: await headers() });
+  // const session = await auth.api.getSession({ headers: await headers() });
 
   const user = await auth.api.getActiveMember({ headers: await headers() });
   // if (!user) return console.log("Não tem!!!");

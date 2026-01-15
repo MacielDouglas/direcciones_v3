@@ -2,7 +2,8 @@
 
 import { auth } from "@/lib/auth";
 import { authClient } from "@/lib/auth-client";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+// import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
